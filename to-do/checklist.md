@@ -61,28 +61,18 @@ This checklist serves as an index of all tasks for the project, both completed a
 ## 8. Testing and Quality Assurance
 - [x] Implement minimal testing to ensure basic functionality
 - [x] Review and potentially expand existing minimal tests
-- [ ] Consider more comprehensive testing after initial real-world usage and feedback
-- [ ] Develop comprehensive unit tests
+- [ ] Initial real-world testing
+- [ ] Develop minimal unit tests
 - [ ] Create integration tests for different platforms (Linux, macOS, Raspberry Pi)
 - [ ] Implement automated testing in CI/CD pipeline
 
-## 9. Performance and Distribution
-- [x] Ensure minimal impact on system startup time
-- [ ] Prepare for easy installation on both macOS and Linux
-  - [x] Add compilation instructions for macOS and aarch64 Linux (Raspberry Pi)
-  - [ ] Set up GitHub Actions for automatic releases
-  - [ ] Create Homebrew formula for macOS installation
-  - [ ] Create package configurations for common Linux package managers
-
-## 10. Cross-compilation and Build Process
-- [ ] Improve cross-compilation process
-  - [ ] Debug and fix any remaining cross-compilation issues for aarch64
-  - [ ] Create a streamlined process for building on different architectures
-
-## 11. Simplified Script-based Solution
-- [x] Implement a simple and reliable method for setting environment variables
-- [x] Remove all code in `internal/service/service.go`
-- [ ] Test the new approach on various platforms (Linux, macOS, Raspberry Pi)
+## 10. Build Process & Distribution
+- [x] Create a streamlined process for building on different architectures
+  - [x] `goreleaser`
+  - [x] GitHub actions
+- [x] Add compilation instructions for macOS and aarch64 Linux (Raspberry Pi)
+- [ ] Create Homebrew formula for macOS installation
+- [ ] Create package configurations for common Linux package managers
 
 ## 12. Documentation and README Updates
 - [x] Update README with:

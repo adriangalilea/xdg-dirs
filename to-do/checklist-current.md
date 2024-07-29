@@ -11,7 +11,6 @@ Rules:
 ## PENDING (ordered by urgency)
 
 - [MEDIUM] Test in macOS
-- [MEDIUM] Set up GitHub Actions for automatic releases
 - [LOW] Create Homebrew formula for macOS installation
 - [LOW] Create package configurations for common Linux package managers
 - [LOW] Develop minimal unit tests
@@ -22,8 +21,6 @@ Rules:
 - [LOW] Implement automated testing in CI/CD pipeline
 
 ## DOING
-
-- [HIGH] Create a streamlined process for building on different architectures
 
 ## BLOCKED (until)
 - (24/08/01) Test in a Raspberry Pi aarch64
