@@ -1,45 +1,24 @@
 # xdg-user-dirs-cross
 
-A cross-platform tool for managing XDG user directories consistently across macOS and Linux.
+Manage your XDG directories.
 
-Meant to replace `xdg-user-dirs` and `xdg-user-dirs-update`.
+Meant to replace `xdg-user-dirs` and `xdg-user-dirs-update` but adds:
+
+- Support for the missing non-user XDG paths, namely:
+   - `XDG_DATA_HOME`
+   - `XDG_CONFIG_HOME`
+   - `XDG_STATE_HOME`
+   - `XDG_CACHE_HOME`
+   - `XDG_RUNTIME_DIR`
+- Cross-platform: macOS and Linux, perfect for cross-platform dotfiles.
 
 It works very similarly, but instead of using `~/.config/user-dirs.dirs` which is both a subjectively awful name, and objectively non XDG compliant directory (feel free to correct me if I'm wrong), we use `~/.config/xdg/` both for the user editable `user.dirs` and the `generated.dirs` which is a representation of what is being applied.
 
-The tool is designed to be evaluated by the shell. This means that the only output is the exported variables:
-
-```
-$ ./xdg_user_dirs_update_cross
-export XDG_CONFIG_HOME="/home/adrian/.config"
-export XDG_DATA_HOME="/home/adrian/.local/share"
-export XDG_RUNTIME_DIR="/run/user/1000"
-export XDG_DOCUMENTS_DIR="/home/adrian/Documents"
-export XDG_MUSIC_DIR="/home/adrian/Music"
-export XDG_VIDEOS_DIR="/home/adrian/Videos"
-export XDG_TEMPLATES_DIR="/home/adrian/Templates"
-export XDG_CACHE_HOME="/home/adrian/.local/cache"
-export XDG_STATE_HOME="/home/adrian/.local/state"
-export XDG_DESKTOP_DIR="/home/adrian/Desktop"
-export XDG_DOWNLOAD_DIR="/home/adrian/Downloads"
-export XDG_PICTURES_DIR="/home/adrian/Pictures"
-export XDG_PUBLICSHARE_DIR="/home/adrian/Public"
-```
-
- So that it can be used like:
-
-```
-eval "$(xdg-user-dirs-cross)"
-```
-
-In order for the env variables to be set on the user session, you can do it in any way you like. Ex: `~/.zshenv`, `~/.profile`, `~/.zshrc`, `~/.bashrc`...
-
 ## Features
 
-- Cross-platform compatibility (macOS and Linux), generate XDG paths that are cross-compatible, perfect for cross-platform dotfiles
 - Non-destructive directory updates, when a new XDG folder is set, the previous folder is not modified in any way
 - Customizable user directory locations on `~/.config/xdg/user.dirs`
-- Automatic generation of `~/.config/xdg/generated.dirs`, which will be a merge of `~/.config/xdg/user.dirs` and default XDG standards as per this [XDG go library](https://github.com/adrg/xdg)
-- XDG Base Directory Specification compliance
+- Automatic generation of `~/.config/xdg/generated.dirs`, which will be a merge of `~/.config/xdg/user.dirs` and default XDG standards as per [this XDG go library](https://github.com/adrg/xdg)
 
 ## Installation
 
@@ -68,26 +47,46 @@ To compile `xdg-user-dirs-cross` for macOS and aarch64 Linux (Raspberry Pi), fol
 
 </details>
 
-## Logging System
-
-
 ## Usage
+
+The tool is designed to be evaluated by the shell. This means that the only output is the exported variables:
+
+```
+$ ./xdg_user_dirs_update_cross
+export XDG_CONFIG_HOME="/home/adrian/.config"
+export XDG_DATA_HOME="/home/adrian/.local/share"
+export XDG_RUNTIME_DIR="/run/user/1000"
+export XDG_DOCUMENTS_DIR="/home/adrian/Documents"
+export XDG_MUSIC_DIR="/home/adrian/Music"
+export XDG_VIDEOS_DIR="/home/adrian/Videos"
+export XDG_TEMPLATES_DIR="/home/adrian/Templates"
+export XDG_CACHE_HOME="/home/adrian/.local/cache"
+export XDG_STATE_HOME="/home/adrian/.local/state"
+export XDG_DESKTOP_DIR="/home/adrian/Desktop"
+export XDG_DOWNLOAD_DIR="/home/adrian/Downloads"
+export XDG_PICTURES_DIR="/home/adrian/Pictures"
+export XDG_PUBLICSHARE_DIR="/home/adrian/Public"
+```
+
+So it's meant to be used like this:
+
+```
+eval "$(xdg-user-dirs-cross)"
+```
+
+In order for the env variables to be set on the user session, you can do it in any way you like. Ex: `~/.zshenv`, `~/.profile`, `~/.zshrc`, `~/.bashrc`...
+
 
 1. (Optional) Edit `~/.config/xdg/user.dirs` with your desired XDG directory locations. The tool will generate a `~/.config/xdg/generated.dirs` file based on this configuration.
 
-2. Run the tool:
-   ```
-   xdg-user-dirs-cross [options]
-   ```
-
-3. To ensure XDG environment variables are set, add the following line to your shell's startup file (e.g., `~/.bashrc`, `~/.zshrc`, or `~/.profile`):
+2. To ensure XDG environment variables are set, add the following line to your shell's startup file (e.g., `~/.bashrc`, `~/.zshrc`, or `~/.profile`):
    ```
    eval "$(xdg-user-dirs-cross)"
    ```
 
    This command evaluates the output of `xdg-user-dirs-cross`, which consists of export statements. This is necessary because a Go program cannot directly modify the environment of the shell that calls it.
 
-4. Restart your shell or log out and log back in for the changes to take effect.
+3. Restart your shell or log out and log back in for the changes to take effect.
 
 The tool will generate a `~/.config/xdg/generated.dirs` file, which is a combination of user-specified directories in `user.dirs` and platform-specific defaults for directories not specified in `user.dirs`. All modifications should be done in `user.dirs`.
 
@@ -97,7 +96,7 @@ The tool will generate a `~/.config/xdg/generated.dirs` file, which is a combina
 - `-d, --debug`: Enable verbose output
 - `-n, --dry-run`: Simulate changes without applying them
 - `-c, --create-dirs`: Create directories if they don't exist
-- `-l, --log-file`: Specify the log file path (default: system's temporary directory)
+- `-l, --log-file`: Specify the log file path (default: $HOME/.local/state/xdg-user-dirs-cross/xdg-user-dirs-cross.log)
 
 Example usage with log file specification:
 ```
@@ -154,3 +153,7 @@ The [XDG](https://github.com/adrg/xdg) library which this program relies on:
 So in order to read the actual defaults for your system, we need to first remove the file and unset the vars.
 
 Note that the program attempts a backup of `~/.config/user-dirs.dirs` on `~/.config/xdg/user-dirs.dirs-backup` rather than just deleting it, but it may override the `~/.config/xdg/user-dirs.dirs-backup` if it already exists.
+
+Why is `XDG_DATA_DIRS` and `XDG_CONFIG_DIRS`?
+
+Because it's missing from the [XDG lib](https://github.com/adrg/xdg) we use.

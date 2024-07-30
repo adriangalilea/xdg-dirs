@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	
+	"xdg-user-dirs-cross/internal/conf"
 	"xdg-user-dirs-cross/internal/logger"
 	"xdg-user-dirs-cross/internal/updater"
 )
@@ -18,30 +19,14 @@ func main() {
 	debug := flag.Bool("d", false, "Enable debug output")
 	dryRun := flag.Bool("n", false, "Simulate changes without applying them")
 	createDirs := flag.Bool("c", false, "Create directories if they don't exist")
-	defaultLogFilePath := filepath.Join(os.TempDir(), "xdg-user-dirs-update.log")
-	logFilePath := flag.String("l", defaultLogFilePath, "Specify the log file path")
+	logFilePath := flag.String("l", conf.DefaultLogFilePath, "Specify the log file path")
 	help := flag.Bool("help", false, "Show help message")
 	flag.BoolVar(help, "h", false, "Show help message")
 	flag.Parse()
 
-
 	// Display help message if requested
 	if *help {
-		fmt.Println("xdg-user-dirs-cross: A cross-platform tool for managing XDG user directories")
-		fmt.Println("\nUsage:")
-		fmt.Println("xdg-user-dirs-cross [options]")
-		fmt.Println("\nOptions:")
-		fmt.Println("  -d, --debug        Enable debug output")
-		fmt.Println("  -n, --dry-run      Simulate changes without applying them")
-		fmt.Println("  -c, --create-dirs  Create directories if they don't exist")
-		fmt.Printf("  -l, --log-file     Specify the log file path (default: %s)\n", *logFilePath)
-		fmt.Println("  -h, --help         Show help message")
-		fmt.Println("\nConfiguration:")
-		fmt.Println("  This tool looks for ~/.config/xdg/user.dirs")
-		fmt.Println("\nInfo:")
-		fmt.Println("  This tool moves the ~/.config/user-dirs.dirs (deprecated from xdg-user-dirs and xdg-user-dirs-update) into ~/.config/xdg/user-dirs.dirs-backup")
-		fmt.Println("  This tool generates the ~/.config/xdg/user.dirs file.")
-		fmt.Println("\nFor more detailed information, please refer to the README.md file.")
+		fmt.Println(conf.HelpMessage)
 		os.Exit(0)
 	}
 

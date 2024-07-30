@@ -14,6 +14,8 @@ import (
 	"path/filepath"
 	"time"
 	"sync"
+
+	"xdg-user-dirs-cross/internal/conf"
 )
 
 const maxLogFileSize = 10 * 1024 * 1024 // 10 MB
@@ -40,11 +42,7 @@ func NewLogger(debug bool, logFilePath string) *Logger {
 	var err error
 
 	if logFilePath == "" {
-		homeDir, err := os.UserHomeDir()
-		if err != nil {
-			log.Fatalf("Failed to get user home directory: %v", err)
-		}
-		logFilePath = filepath.Join(homeDir, ".local", "state", "xdg-user-dirs-cross", "xdg-user-dirs-cross.log")
+		logFilePath = conf.DefaultLogFilePath
 	}
 
 	// Ensure the directory exists
