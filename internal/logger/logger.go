@@ -11,6 +11,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"time"
 	"sync"
 )
@@ -39,7 +40,17 @@ func NewLogger(debug bool, logFilePath string) *Logger {
 	var err error
 
 	if logFilePath == "" {
-		logFilePath = filepath.Join(os.TempDir(), "xdg-user-dirs-update.log")
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			log.Fatalf("Failed to get user home directory: %v", err)
+		}
+		logFilePath = filepath.Join(homeDir, ".local", "state", "xdg-user-dirs-cross", "xdg-user-dirs-cross.log")
+	}
+
+	// Ensure the directory exists
+	err = os.MkdirAll(filepath.Dir(logFilePath), 0755)
+	if err != nil {
+		log.Fatalf("Failed to create log directory: %v", err)
 	}
 
 	logFile, err = os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
