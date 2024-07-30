@@ -11,7 +11,6 @@ import (
 	"io"
 	"log"
 	"os"
-	"path/filepath"
 	"time"
 	"sync"
 )
@@ -27,6 +26,12 @@ type Logger struct {
 	errorLogger  *log.Logger
 	exportLogger *log.Logger
 	mu           sync.Mutex
+	writers      struct {
+		info   io.Writer
+		debug  io.Writer
+		error  io.Writer
+		export io.Writer
+	}
 }
 
 func NewLogger(debug bool, logFilePath string) *Logger {
@@ -42,28 +47,36 @@ func NewLogger(debug bool, logFilePath string) *Logger {
 		log.Fatalf("Failed to open log file: %v", err)
 	}
 
-	var infoWriter, debugWriter, errorWriter io.Writer
-	if debug {
-		infoWriter = io.MultiWriter(os.Stdout, logFile)
-		debugWriter = io.MultiWriter(os.Stdout, logFile)
-		errorWriter = io.MultiWriter(os.Stderr, logFile)
-	} else {
-		infoWriter = logFile
-		debugWriter = logFile
-		errorWriter = logFile
-	}
-
 	logger := &Logger{
 		debug:        debug,
 		logFile:      logFile,
 		logFilePath:  logFilePath,
-		infoLogger:   log.New(infoWriter, "INFO: ", log.Ldate|log.Ltime),
-		debugLogger:  log.New(debugWriter, "DEBUG: ", log.Ldate|log.Ltime),
-		errorLogger:  log.New(errorWriter, "ERROR: ", log.Ldate|log.Ltime),
 		exportLogger: log.New(os.Stdout, "", 0),
 	}
 
+	logger.updateWriters()
+
 	return logger
+}
+
+func (l *Logger) updateWriters() {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	if l.debug {
+		l.writers.info = io.MultiWriter(os.Stdout, l.logFile)
+		l.writers.debug = io.MultiWriter(os.Stdout, l.logFile)
+		l.writers.error = io.MultiWriter(os.Stderr, l.logFile)
+	} else {
+		l.writers.info = l.logFile
+		l.writers.debug = l.logFile
+		l.writers.error = l.logFile
+	}
+	l.writers.export = os.Stdout
+
+	l.infoLogger = log.New(l.writers.info, "INFO: ", log.Ldate|log.Ltime)
+	l.debugLogger = log.New(l.writers.debug, "DEBUG: ", log.Ldate|log.Ltime)
+	l.errorLogger = log.New(l.writers.error, "ERROR: ", log.Ldate|log.Ltime)
 }
 
 func (l *Logger) rotateLogFile() error {
@@ -90,56 +103,46 @@ func (l *Logger) rotateLogFile() error {
 		return fmt.Errorf("failed to open new log file: %w", err)
 	}
 
-	l.infoLogger.SetOutput(io.MultiWriter(os.Stdout, l.logFile))
-	l.debugLogger.SetOutput(io.MultiWriter(os.Stdout, l.logFile))
-	l.errorLogger.SetOutput(io.MultiWriter(os.Stderr, l.logFile))
+	l.updateWriters()
 
 	return nil
 }
 
 func (l *Logger) Info(format string, v ...interface{}) {
-	if err := l.rotateLogFile(); err != nil {
-		l.mu.Lock()
-		l.errorLogger.Printf("Failed to rotate log file: %v", err)
-		l.mu.Unlock()
-	}
 	l.mu.Lock()
 	defer l.mu.Unlock()
+	if err := l.rotateLogFile(); err != nil {
+		l.errorLogger.Printf("Failed to rotate log file: %v", err)
+	}
 	l.infoLogger.Printf(format, v...)
 }
 
 func (l *Logger) Debug(format string, v ...interface{}) {
 	if l.debug {
-		if err := l.rotateLogFile(); err != nil {
-			l.mu.Lock()
-			l.errorLogger.Printf("Failed to rotate log file: %v", err)
-			l.mu.Unlock()
-		}
 		l.mu.Lock()
 		defer l.mu.Unlock()
+		if err := l.rotateLogFile(); err != nil {
+			l.errorLogger.Printf("Failed to rotate log file: %v", err)
+		}
 		l.debugLogger.Printf(format, v...)
 	}
 }
 
 func (l *Logger) Error(format string, v ...interface{}) {
-	if err := l.rotateLogFile(); err != nil {
-		l.mu.Lock()
-		l.errorLogger.Printf("Failed to rotate log file: %v", err)
-		l.mu.Unlock()
-	}
 	l.mu.Lock()
 	defer l.mu.Unlock()
+	if err := l.rotateLogFile(); err != nil {
+		l.errorLogger.Printf("Failed to rotate log file: %v", err)
+	}
 	l.errorLogger.Printf(format, v...)
 }
 
 func (l *Logger) Fatal(format string, v ...interface{}) {
-	if err := l.rotateLogFile(); err != nil {
-		l.mu.Lock()
-		l.errorLogger.Printf("Failed to rotate log file: %v", err)
-		l.mu.Unlock()
-	}
 	l.mu.Lock()
 	defer l.mu.Unlock()
+	if err := l.rotateLogFile(); err != nil {
+		l.errorLogger.Printf("Failed to rotate log file: %v", err)
+	}
 	l.errorLogger.Fatalf(format, v...)
 }
 
