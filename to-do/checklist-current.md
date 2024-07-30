@@ -10,6 +10,7 @@ Rules:
 
 ## PENDING (ordered by urgency)
 
+- [NEXT] rename to xdg-dirs since it's not only covering xdg-user-dirs as the original tool, but all, and the -cross part makes it very long, either way name doesn't conflict now since we remove the `user` part
 - [MEDIUM] Test in macOS
 - [LOW] Create Homebrew formula for macOS installation
 - [LOW] Create package configurations for common Linux package managers
