@@ -28,7 +28,7 @@ type Logger struct {
 	debugLogger  *log.Logger
 	errorLogger  *log.Logger
 	exportLogger *log.Logger
-	mu           sync.Mutex
+	mu           sync.RWMutex
 	writers      struct {
 		info   io.Writer
 		debug  io.Writer
@@ -89,10 +89,10 @@ func (l *Logger) updateWriters() {
 }
 
 func (l *Logger) rotateLogFile() error {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-
+	l.mu.RLock()
 	fileInfo, err := l.logFile.Stat()
+	l.mu.RUnlock()
+
 	if err != nil {
 		return fmt.Errorf("failed to get log file info: %w", err)
 	}
@@ -100,6 +100,9 @@ func (l *Logger) rotateLogFile() error {
 	if fileInfo.Size() < maxLogFileSize {
 		return nil
 	}
+
+	l.mu.Lock()
+	defer l.mu.Unlock()
 
 	backupPath := fmt.Sprintf("%s.%s", l.logFilePath, time.Now().Format("20060102T150405"))
 	if err := os.Rename(l.logFilePath, backupPath); err != nil {
@@ -118,8 +121,8 @@ func (l *Logger) rotateLogFile() error {
 }
 
 func (l *Logger) Info(format string, v ...interface{}) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
+	l.mu.RLock()
+	defer l.mu.RUnlock()
 	if err := l.rotateLogFile(); err != nil {
 		l.errorLogger.Printf("Failed to rotate log file: %v", err)
 	}
@@ -128,8 +131,8 @@ func (l *Logger) Info(format string, v ...interface{}) {
 
 func (l *Logger) Debug(format string, v ...interface{}) {
 	if l.debug {
-		l.mu.Lock()
-		defer l.mu.Unlock()
+		l.mu.RLock()
+		defer l.mu.RUnlock()
 		if err := l.rotateLogFile(); err != nil {
 			l.errorLogger.Printf("Failed to rotate log file: %v", err)
 		}
@@ -138,8 +141,8 @@ func (l *Logger) Debug(format string, v ...interface{}) {
 }
 
 func (l *Logger) Error(format string, v ...interface{}) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
+	l.mu.RLock()
+	defer l.mu.RUnlock()
 	if err := l.rotateLogFile(); err != nil {
 		l.errorLogger.Printf("Failed to rotate log file: %v", err)
 	}
@@ -147,8 +150,8 @@ func (l *Logger) Error(format string, v ...interface{}) {
 }
 
 func (l *Logger) Fatal(format string, v ...interface{}) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
+	l.mu.RLock()
+	defer l.mu.RUnlock()
 	if err := l.rotateLogFile(); err != nil {
 		l.errorLogger.Printf("Failed to rotate log file: %v", err)
 	}
@@ -156,7 +159,7 @@ func (l *Logger) Fatal(format string, v ...interface{}) {
 }
 
 func (l *Logger) Export(format string, v ...interface{}) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
+	l.mu.RLock()
+	defer l.mu.RUnlock()
 	l.exportLogger.Print(fmt.Sprintf(format, v...))
 }
