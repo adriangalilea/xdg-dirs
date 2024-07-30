@@ -2,9 +2,9 @@
 
 Manage your XDG directories.
 
-Meant to replace `xdg-user-dirs` and `xdg-user-dirs-update` but adds:
+Meant to replace both `xdg-user-dirs` & `xdg-user-dirs-update` plus:
 
-- Support for the missing non-user XDG paths, namely:
+- Supports the missing non-user XDG paths, namely:
    - `XDG_DATA_HOME`
    - `XDG_CONFIG_HOME`
    - `XDG_STATE_HOME`
