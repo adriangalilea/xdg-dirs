@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/adrg/xdg"
-	"xdg-user-dirs-cross/internal/logger"
+	"xdg-dirs/internal/logger"
 )
 
 func TestXDGDirsBasicFunctionality(t *testing.T) {

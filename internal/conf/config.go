@@ -17,12 +17,12 @@ func init() {
 		panic(fmt.Sprintf("Failed to get user home directory: %v", err))
 	}
 
-	DefaultLogFilePath = filepath.Join(homeDir, ".local", "state", "xdg-user-dirs-cross", "xdg-user-dirs-cross.log")
+	DefaultLogFilePath = filepath.Join(homeDir, ".local", "state", "xdg-dirs", "xdg-dirs.log")
 
-	HelpMessage = fmt.Sprintf(`xdg-user-dirs-cross: A cross-platform tool for managing XDG user directories
+	HelpMessage = fmt.Sprintf(`xdg-dirs: A cross-platform tool for managing XDG user directories
 
 Usage:
-xdg-user-dirs-cross [options]
+xdg-dirs [options]
 
 Options:
   -d, --debug        Enable debug output

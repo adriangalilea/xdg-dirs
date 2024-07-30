@@ -9,7 +9,7 @@ import (
 	"io/ioutil"
 	"strings"
 	"sync"
-	"xdg-user-dirs-cross/internal/logger"
+	"xdg-dirs/internal/logger"
 )
 
 type XDGDirs struct {

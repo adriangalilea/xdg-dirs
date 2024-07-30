@@ -13,7 +13,7 @@ builds:
     goarch:
       - amd64
       - arm64
-    main: ./cmd/xdg-user-dirs-cross
+    main: ./cmd/xdg-dirs
 
 archives:
   - format: tar.gz
@@ -29,12 +29,12 @@ archives:
       - none*
 
 checksum:
-  name_template: 'checksums.txt'
+  name_template: "checksums.txt"
 
 release:
   github:
     owner: adriangalilea
-    name: xdg-user-dirs-cross
+    name: xdg-dirs
 
 changelog:
   sort: asc

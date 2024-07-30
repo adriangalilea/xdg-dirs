@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 	
-	"xdg-user-dirs-cross/internal/conf"
-	"xdg-user-dirs-cross/internal/logger"
-	"xdg-user-dirs-cross/internal/updater"
+	"xdg-dirs/internal/conf"
+	"xdg-dirs/internal/logger"
+	"xdg-dirs/internal/updater"
 )
 
 var log *logger.Logger

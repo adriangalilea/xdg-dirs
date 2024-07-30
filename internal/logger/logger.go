@@ -15,7 +15,7 @@ import (
 	"time"
 	"sync"
 
-	"xdg-user-dirs-cross/internal/conf"
+	"xdg-dirs/internal/conf"
 )
 
 const maxLogFileSize = 10 * 1024 * 1024 // 10 MB

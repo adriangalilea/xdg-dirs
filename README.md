@@ -1,4 +1,4 @@
-# xdg-user-dirs-cross
+# xdg-dirs
 
 Manage your XDG directories.
 
@@ -25,24 +25,24 @@ It works very similarly, but instead of using `~/.config/user-dirs.dirs` which i
 <details>
 <summary>Compiling from source</summary>
 
-To compile `xdg-user-dirs-cross` for macOS and aarch64 Linux (Raspberry Pi), follow these steps:
+To compile `xdg-dirs` for macOS and aarch64 Linux (Raspberry Pi), follow these steps:
 
 1. Ensure you have Go installed on your system. You can download it from https://golang.org/dl/
 
 2. Clone the repository:
    ```
-   git clone https://github.com/yourusername/xdg-user-dirs-cross.git
-   cd xdg-user-dirs-cross
+   git clone https://github.com/yourusername/xdg-dirs.git
+   cd xdg-dirs
    ```
 
 3. Compile for your current system:
    ```
-   go build -o xdg-user-dirs-cross
+   go build -o xdg-dirs
    ```
 
 4. Move the binary to a directory in your PATH:
    ```
-   sudo mv xdg-user-dirs-cross /usr/local/bin/
+   sudo mv xdg-dirs /usr/local/bin/
    ```
 
 </details>
@@ -71,7 +71,7 @@ export XDG_PUBLICSHARE_DIR="/home/adrian/Public"
 So it's meant to be used like this:
 
 ```
-eval "$(xdg-user-dirs-cross)"
+eval "$(xdg-dirs)"
 ```
 
 In order for the env variables to be set on the user session, you can do it in any way you like. Ex: `~/.zshenv`, `~/.profile`, `~/.zshrc`, `~/.bashrc`...
@@ -81,10 +81,10 @@ In order for the env variables to be set on the user session, you can do it in a
 
 2. To ensure XDG environment variables are set, add the following line to your shell's startup file (e.g., `~/.bashrc`, `~/.zshrc`, or `~/.profile`):
    ```
-   eval "$(xdg-user-dirs-cross)"
+   eval "$(xdg-dirs)"
    ```
 
-   This command evaluates the output of `xdg-user-dirs-cross`, which consists of export statements. This is necessary because a Go program cannot directly modify the environment of the shell that calls it.
+   This command evaluates the output of `xdg-dirs`, which consists of export statements. This is necessary because a Go program cannot directly modify the environment of the shell that calls it.
 
 3. Restart your shell or log out and log back in for the changes to take effect.
 
@@ -96,11 +96,11 @@ The tool will generate a `~/.config/xdg/generated.dirs` file, which is a combina
 - `-d, --debug`: Enable verbose output
 - `-n, --dry-run`: Simulate changes without applying them
 - `-c, --create-dirs`: Create directories if they don't exist
-- `-l, --log-file`: Specify the log file path (default: $HOME/.local/state/xdg-user-dirs-cross/xdg-user-dirs-cross.log)
+- `-l, --log-file`: Specify the log file path (default: $HOME/.local/state/xdg-dirs/xdg-dirs.log)
 
 Example usage with log file specification:
 ```
-xdg-user-dirs-cross -l ~/xdg-update.log
+xdg-dirs -l ~/xdg-update.log
 ```
 
 ## Configuration

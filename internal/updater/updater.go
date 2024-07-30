@@ -6,8 +6,8 @@ import (
 	"strings"
 	"path/filepath"
 
-	"xdg-user-dirs-cross/internal/logger"
-	"xdg-user-dirs-cross/internal/xdgdirs"
+	"xdg-dirs/internal/logger"
+	"xdg-dirs/internal/xdgdirs"
 )
 
 type Updater struct {

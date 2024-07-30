@@ -25,7 +25,7 @@ This meant every single output from the binary should be silent unless `-debug` 
 
 ## Review Tasks
 
-1. Reviewed cmd/xdg-user-dirs-cross/main.go:
+1. Reviewed cmd/xdg-dirs/main.go:
    - [x] 1.1 Checked for proper error handling.
    - [x] 1.2 Verified command-line flag usage.
    - [x] 1.3 Reviewed the main logic flow.
@@ -63,7 +63,7 @@ This meant every single output from the binary should be silent unless `-debug` 
 
 ### Summary of Findings
 
-1. **cmd/xdg-user-dirs-cross/main.go**:
+1. **cmd/xdg-dirs/main.go**:
    - Proper error handling was implemented.
    - Command-line flag usage was correct.
    - Main logic flow was clear and well-structured.

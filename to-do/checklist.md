@@ -110,3 +110,7 @@ This checklist serves as an index of all tasks for the project, both completed a
 - [x] Attempt to use LoginHook on macOS
 - [x] Try modifying /etc/profile and /etc/zprofile
 - [x] Experiment with creating a custom PAM session module
+
+## 15. Rebrand
+
+- [x] rename to xdg-dirs since it's not only covering xdg-user-dirs as the original tool, but all, and the -cross part makes it very long, either way name doesn't conflict now since we remove the `user` part

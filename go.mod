@@ -1,4 +1,4 @@
-module xdg-user-dirs-cross
+module xdg-dirs
 
 go 1.22.2
 
