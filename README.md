@@ -31,7 +31,7 @@ To compile `xdg-dirs` for macOS and aarch64 Linux (Raspberry Pi), follow these s
 
 2. Clone the repository:
    ```
-   git clone https://github.com/yourusername/xdg-dirs.git
+   git clone https://github.com/adriangalilea/xdg-dirs.git
    cd xdg-dirs
    ```
 
