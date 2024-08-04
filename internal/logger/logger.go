@@ -16,9 +16,15 @@ import (
 	"sync"
 
 	"xdg-dirs/internal/conf"
+	"github.com/charmbracelet/lipgloss"
 )
 
 const maxLogFileSize = 10 * 1024 * 1024 // 10 MB
+
+var (
+	timestampStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("39"))
+	messageStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("82"))
+)
 
 type Logger struct {
 	debug        bool
@@ -136,7 +142,8 @@ func (l *Logger) Debug(format string, v ...interface{}) {
 		if err := l.rotateLogFile(); err != nil {
 			l.errorLogger.Printf("Failed to rotate log file: %v", err)
 		}
-		l.debugLogger.Printf(format, v...)
+		message := messageStyle.Render(fmt.Sprintf(format, v...))
+		l.debugLogger.Print(message)
 	}
 }
 

@@ -22,43 +22,30 @@ func NewUpdater(log *logger.Logger) *Updater {
 	}
 }
 
-func (u *Updater) Update(createDirs, dryRun bool) error {
-	u.logger.Debug("Starting Update")
-
-	// Read user directories
-	userDirs, err := u.xdgDirs.ReadUserDirs()
-	if err != nil {
-		u.logger.Error("Failed to read user directories: %v", err)
-		return fmt.Errorf("failed to read user directories: %w", err)
-	}
-	u.logger.Debug("Contents of userDirs: %v", userDirs)
-
-	// Handle dry-run mode
+func (u *Updater) Update(userDirs map[string]string, createDirs, dryRun bool) error {
 	if dryRun {
 		u.logger.Debug("Dry run mode: No changes will be applied")
+		return nil
 	}
 
-	// Ensure directories are created if needed
-	if err := u.ensureDirectories(userDirs, createDirs, dryRun); err != nil {
-		u.logger.Error("Failed to ensure directories: %v", err)
-		return fmt.Errorf("failed to ensure directories: %w", err)
-	}
-
-	// Write updated directories to ~/.config/xdg/generated.dirs if not in dry-run mode
-	if !dryRun {
-		u.logger.Debug("Not in dry run mode, writing to ~/.config/xdg/generated.dirs")
-		if err := u.xdgDirs.WriteUserDirs(u.xdgDirs.Dirs); err != nil {
-			u.logger.Error("Failed to write to ~/.config/xdg/generated.dirs: %v", err)
-			return fmt.Errorf("failed to write to ~/.config/xdg/generated.dirs: %w", err)
+	if createDirs {
+		if err := u.ensureDirectories(userDirs, createDirs); err != nil {
+			u.logger.Error("Failed to ensure directories: %v", err)
+			return fmt.Errorf("failed to ensure directories: %w", err)
 		}
-		u.logger.Debug("Updated ~/.config/xdg/generated.dirs")
 	}
 
-	u.logger.Debug("XDG user directories update completed.")
+	generatedDirsPath := filepath.Join(os.Getenv("HOME"), ".config", "xdg", "generated.dirs")
+	if err := u.xdgDirs.WriteUserDirs(userDirs); err != nil {
+		u.logger.Error("Failed to write to %s: %v", generatedDirsPath, err)
+		return fmt.Errorf("failed to write to %s: %w", generatedDirsPath, err)
+	}
+
+	u.logger.Debug("Wrote merged XDG directories to %s", generatedDirsPath)
 	return nil
 }
 
-func (u *Updater) ensureDirectories(userDirs map[string]string, createDirs, dryRun bool) error {
+func (u *Updater) ensureDirectories(userDirs map[string]string, createDirs bool) error {
 	if !createDirs {
 		return nil
 	}
@@ -77,16 +64,12 @@ func (u *Updater) ensureDirectories(userDirs map[string]string, createDirs, dryR
 		// Check if the path is a directory
 		info, err := os.Stat(dir)
 		if os.IsNotExist(err) {
-			if dryRun {
-				u.logger.Debug("Would create directory for %s: %s", key, dir)
-			} else {
-				err := os.MkdirAll(dir, 0700)
-				if err != nil {
-					u.logger.Error("Failed to create directory for %s: %v", key, err)
-					return fmt.Errorf("failed to create directory for %s: %w", key, err)
-				}
-				u.logger.Debug("Created directory for %s: %s", key, dir)
+			err := os.MkdirAll(dir, 0700)
+			if err != nil {
+				u.logger.Error("Failed to create directory for %s: %v", key, err)
+				return fmt.Errorf("failed to create directory for %s: %w", key, err)
 			}
+			u.logger.Debug("Created directory for %s: %s", key, dir)
 		} else if err != nil {
 			u.logger.Error("Failed to check directory for %s: %v", key, err)
 			return fmt.Errorf("failed to check directory for %s: %w", key, err)

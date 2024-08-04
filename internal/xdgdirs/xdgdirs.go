@@ -60,15 +60,16 @@ func (x *XDGDirs) ReadUserDirs() (map[string]string, error) {
 		}
 		configHome = filepath.Join(homeDir, ".config")
 	}
-	userDirsPath := filepath.Join(configHome, "xdg", "generated.dirs")
-	x.logger.Debug("Attempting to read generated.dirs from: %s", userDirsPath)
+	userDirsPath := filepath.Join(configHome, "xdg", "user.dirs")
 
 	if _, err := os.Stat(userDirsPath); err == nil {
 		content, err := ioutil.ReadFile(userDirsPath)
 		if err != nil {
-			x.logger.Error("Failed to read generated.dirs file: %v", err)
-			return nil, fmt.Errorf("failed to read generated.dirs file: %w", err)
+			x.logger.Error("Failed to read user.dirs file: %v", err)
+			return nil, fmt.Errorf("failed to read user.dirs file: %w", err)
 		}
+
+		x.logger.Debug("Contents of %s:\n%s", userDirsPath, string(content))
 
 		lines := strings.Split(string(content), "\n")
 		for _, line := range lines {
@@ -77,13 +78,14 @@ func (x *XDGDirs) ReadUserDirs() (map[string]string, error) {
 				if len(parts) == 2 {
 					key := strings.TrimSpace(parts[0])
 					value := strings.Trim(strings.TrimSpace(parts[1]), "\"")
+					value = os.ExpandEnv(value) // Expand environment variables
 					userDirs[key] = value
 				}
 			}
 		}
+	} else {
+		x.logger.Debug("user.dirs file not found at %s", userDirsPath)
 	}
-
-	x.logger.Debug("Contents of generated.dirs: %v", userDirs)
 
 	// Merge user-defined directories with defaults, preferring user-defined values
 	defaults := getDefaultXDGDirs()
@@ -92,7 +94,13 @@ func (x *XDGDirs) ReadUserDirs() (map[string]string, error) {
 			userDirs[key] = defaultValue
 		}
 	}
-	x.logger.Debug("Merged user directories: %v", userDirs)
+
+	// Log all merged user directories
+	var logEntries []string
+	for key, value := range userDirs {
+		logEntries = append(logEntries, fmt.Sprintf("%s=%s", key, value))
+	}
+	x.logger.Debug("Merged user directories:\n%s", strings.Join(logEntries, "\n"))
 	return userDirs, nil
 }
 
