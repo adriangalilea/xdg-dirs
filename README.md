@@ -12,7 +12,7 @@ Meant to replace both `xdg-user-dirs` & `xdg-user-dirs-update` plus:
    - `XDG_RUNTIME_DIR`
 - Cross-platform: macOS and Linux, perfect for cross-platform dotfiles.
 
-It works very similarly, but instead of using `~/.config/user-dirs.dirs` which is both a subjectively awful name, and objectively non XDG compliant directory (feel free to correct me if I'm wrong), we use `~/.config/xdg/` both for the user editable `user.dirs` and the `generated.dirs` which is a representation of what is being applied.
+It works very similarly, but instead of using `~/.config/user-dirs.dirs` which is both a subjectively awful name, and an objectively non-XDG-compliant path, we use `~/.config/xdg/` for both the user-editable `user.dirs` and the `generated.dirs` which represents what is being applied.
 
 ## Features
 
@@ -25,7 +25,7 @@ It works very similarly, but instead of using `~/.config/user-dirs.dirs` which i
 <details>
 <summary>Compiling from source</summary>
 
-To compile `xdg-dirs` for macOS and aarch64 Linux (Raspberry Pi), follow these steps:
+To compile `xdg-dirs` from source:
 
 1. Ensure you have Go installed on your system. You can download it from https://golang.org/dl/
 
@@ -37,7 +37,7 @@ To compile `xdg-dirs` for macOS and aarch64 Linux (Raspberry Pi), follow these s
 
 3. Compile for your current system:
    ```
-   go build -o xdg-dirs
+   go build -o xdg-dirs ./cmd/xdg-dirs
    ```
 
 4. Move the binary to a directory in your PATH:
@@ -52,7 +52,7 @@ To compile `xdg-dirs` for macOS and aarch64 Linux (Raspberry Pi), follow these s
 The tool is designed to be evaluated by the shell. This means that the only output is the exported variables:
 
 ```
-$ ./xdg_user_dirs_update_cross
+$ xdg-dirs
 export XDG_CONFIG_HOME="/home/adrian/.config"
 export XDG_DATA_HOME="/home/adrian/.local/share"
 export XDG_RUNTIME_DIR="/run/user/1000"
@@ -60,7 +60,7 @@ export XDG_DOCUMENTS_DIR="/home/adrian/Documents"
 export XDG_MUSIC_DIR="/home/adrian/Music"
 export XDG_VIDEOS_DIR="/home/adrian/Videos"
 export XDG_TEMPLATES_DIR="/home/adrian/Templates"
-export XDG_CACHE_HOME="/home/adrian/.local/cache"
+export XDG_CACHE_HOME="/home/adrian/.cache"
 export XDG_STATE_HOME="/home/adrian/.local/state"
 export XDG_DESKTOP_DIR="/home/adrian/Desktop"
 export XDG_DOWNLOAD_DIR="/home/adrian/Downloads"
@@ -74,19 +74,16 @@ So it's meant to be used like this:
 eval "$(xdg-dirs)"
 ```
 
-In order for the env variables to be set on the user session, you can do it in any way you like. Ex: `~/.zshenv`, `~/.profile`, `~/.zshrc`, `~/.bashrc`...
+To ensure XDG environment variables are set in your shell:
 
+1. (Optional) Create `~/.config/xdg/user.dirs` with your desired XDG directory locations.
 
-1. (Optional) Edit `~/.config/xdg/user.dirs` with your desired XDG directory locations. The tool will generate a `~/.config/xdg/generated.dirs` file based on this configuration.
-
-2. To ensure XDG environment variables are set, add the following line to your shell's startup file (e.g., `~/.bashrc`, `~/.zshrc`, or `~/.profile`):
+2. Add the following line to your shell's startup file (`~/.zshenv`, `~/.profile`, `~/.zshrc`, or `~/.bashrc`):
    ```
    eval "$(xdg-dirs)"
    ```
 
-   This command evaluates the output of `xdg-dirs`, which consists of export statements. This is necessary because a Go program cannot directly modify the environment of the shell that calls it.
-
-3. Restart your shell or log out and log back in for the changes to take effect.
+3. Restart your shell or source your configuration file for the changes to take effect.
 
 The tool will generate a `~/.config/xdg/generated.dirs` file, which is a combination of user-specified directories in `user.dirs` and platform-specific defaults for directories not specified in `user.dirs`. All modifications should be done in `user.dirs`.
 
@@ -118,25 +115,38 @@ XDG_CACHE_HOME="$HOME/.local/cache"
 
 For instance, I prefer to have the cache folder in `~/.local/cache` rather than `~/.cache` simply because I prefer a clutter-free `~` home :)
 
+#### Recommended macOS Configuration
+
+If you're on macOS and want to use standard XDG paths instead of macOS defaults:
+
+```bash
+# ~/.config/xdg/user.dirs
+# Custom XDG directories - prefer standard XDG paths over macOS defaults
+XDG_CONFIG_HOME="$HOME/.config"
+XDG_CACHE_HOME="$HOME/.local/cache"
+XDG_DATA_HOME="$HOME/.local/share"
+XDG_STATE_HOME="$HOME/.local/state"
+# Use macOS temp directory for runtime - auto-cleaned on reboot
+XDG_RUNTIME_DIR="$TMPDIR"
+```
+
+This configuration:
+- Uses standard XDG paths (`.config`, `.local/share`, etc.) instead of `~/Library/Application Support`
+- Respects the XDG spec requirement that `XDG_RUNTIME_DIR` must be cleaned on reboot by using `$TMPDIR`
+- Keeps your home directory organized with a clean `.local` structure
+
 You can omit any directories you don't want to customize, and the tool will use platform-specific defaults.
 
 For instance, in this case, `XDG_VIDEOS_DIR` will be `~/Videos` on Linux and `~/Movies` on macOS.
 
 ## Default Behavior
 
-- Uses XDG-style paths for core directories on both macOS and Linux
-- Applies platform-specific defaults for user directories when not specified
+- Uses platform-specific defaults for all directories
+- User configurations in `user.dirs` override defaults
 - Preserves exact configurations from `user.dirs`
 - Generates `~/.config/xdg/generated.dirs` based on `user.dirs` and defaults
 
 For more information on XDG Base Directory Specification, check [XDG](https://github.com/adrg/xdg).
-
-## Command-line Options
-
-- `-h`: Show help message
-- `-d, --debug`: Enable verbose output
-- `-n, --dry-run`: Simulate changes without applying them
-- `-c, --create-dirs`: Create directories if they don't exist
 
 ## FAQ
 
@@ -152,8 +162,8 @@ The [XDG](https://github.com/adrg/xdg) library which this program relies on:
 
 So in order to read the actual defaults for your system, we need to first remove the file and unset the vars.
 
-Note that the program attempts a backup of `~/.config/user-dirs.dirs` on `~/.config/xdg/user-dirs.dirs-backup` rather than just deleting it, but it may override the `~/.config/xdg/user-dirs.dirs-backup` if it already exists.
+Note that the program backs up `~/.config/user-dirs.dirs` to `~/.config/xdg/user-dirs.dirs-backup` rather than deleting it. If a backup already exists, it will be overwritten.
 
-Why is `XDG_DATA_DIRS` and `XDG_CONFIG_DIRS`?
+Why are `XDG_DATA_DIRS` and `XDG_CONFIG_DIRS` missing?
 
-Because it's missing from the [XDG lib](https://github.com/adrg/xdg) we use.
+Because they're missing from the [XDG lib](https://github.com/adrg/xdg) we use.

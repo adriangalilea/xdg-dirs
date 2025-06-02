@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 
 	"github.com/adrg/xdg"
-	"io/ioutil"
 	"strings"
 	"sync"
 	"xdg-dirs/internal/logger"
@@ -63,7 +62,7 @@ func (x *XDGDirs) ReadUserDirs() (map[string]string, error) {
 	userDirsPath := filepath.Join(configHome, "xdg", "user.dirs")
 
 	if _, err := os.Stat(userDirsPath); err == nil {
-		content, err := ioutil.ReadFile(userDirsPath)
+		content, err := os.ReadFile(userDirsPath)
 		if err != nil {
 			x.logger.Error("Failed to read user.dirs file: %v", err)
 			return nil, fmt.Errorf("failed to read user.dirs file: %w", err)
@@ -77,7 +76,12 @@ func (x *XDGDirs) ReadUserDirs() (map[string]string, error) {
 				parts := strings.SplitN(line, "=", 2)
 				if len(parts) == 2 {
 					key := strings.TrimSpace(parts[0])
-					value := strings.Trim(strings.TrimSpace(parts[1]), "\"")
+					value := strings.TrimSpace(parts[1])
+					// Strip inline comments
+					if idx := strings.Index(value, "#"); idx != -1 {
+						value = strings.TrimSpace(value[:idx])
+					}
+					value = strings.Trim(value, "\"")
 					value = os.ExpandEnv(value) // Expand environment variables
 					userDirs[key] = value
 				}

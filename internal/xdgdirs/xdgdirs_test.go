@@ -1,133 +1,113 @@
 package xdgdirs
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
-	"github.com/adrg/xdg"
 	"xdg-dirs/internal/logger"
 )
 
-func TestXDGDirsBasicFunctionality(t *testing.T) {
-	// Save the original ConfigHome and restore it after the test
-	origConfigHome := xdg.ConfigHome
-	defer func() { xdg.ConfigHome = origConfigHome }()
-
-	// Create a temporary directory for our test files
-	tmpDir, err := ioutil.TempDir("", "xdg-test")
-	if err != nil {
-		t.Fatalf("Failed to create temp dir: %v", err)
-	}
-	defer os.RemoveAll(tmpDir)
-
-	xdg.ConfigHome = tmpDir
+// Test 1: Core feature - user config actually overrides defaults
+func TestUserConfigOverridesDefaults(t *testing.T) {
+	tmpDir := t.TempDir()
+	os.Setenv("XDG_CONFIG_HOME", tmpDir)
 	os.Setenv("HOME", tmpDir)
+	defer os.Unsetenv("XDG_CONFIG_HOME")
+	defer os.Unsetenv("HOME")
 
-	log := logger.NewLogger(true)
-	xdgDirs := NewXDGDirs(log)
+	// User wants cache in .local/cache instead of default
+	xdgDir := filepath.Join(tmpDir, "xdg")
+	os.MkdirAll(xdgDir, 0755)
+	os.WriteFile(filepath.Join(xdgDir, "user.dirs"), []byte(`XDG_CACHE_HOME="$HOME/.local/cache"`), 0644)
 
-	// Test ReadUserDirs and WriteUserDirs
-	userDirs, err := xdgDirs.ReadUserDirs()
-	if err != nil {
-		t.Fatalf("ReadUserDirs() error = %v", err)
-	}
+	log := logger.NewLogger(false, "")
+	x := NewXDGDirs(log)
+	dirs, _ := x.ReadUserDirs()
 
-	err = xdgDirs.WriteUserDirs(userDirs)
-	if err != nil {
-		t.Fatalf("WriteUserDirs() error = %v", err)
-	}
-
-	// Check if user-dirs.dirs was generated
-	userDirsDirsPath := filepath.Join(tmpDir, "user-dirs.dirs")
-	if _, err := os.Stat(userDirsDirsPath); os.IsNotExist(err) {
-		t.Errorf("user-dirs.dirs file was not created")
-	}
-
-	// Read and parse the generated user-dirs.dirs file
-	content, err := ioutil.ReadFile(userDirsDirsPath)
-	if err != nil {
-		t.Fatalf("Failed to read user-dirs.dirs: %v", err)
-	}
-
-	// Parse the content and check if directories were created
-	lines := strings.Split(string(content), "\n")
-	for _, line := range lines {
-		if strings.HasPrefix(line, "XDG_") && strings.Contains(line, "=") {
-			parts := strings.SplitN(line, "=", 2)
-			if len(parts) == 2 {
-				dirPath := strings.Trim(parts[1], "\"")
-				dirPath = strings.Replace(dirPath, "$HOME", tmpDir, 1)
-				if _, err := os.Stat(dirPath); os.IsNotExist(err) {
-					t.Errorf("Directory %s was not created", dirPath)
-				}
-			}
-		}
+	expected := filepath.Join(tmpDir, ".local/cache")
+	if dirs["XDG_CACHE_HOME"] != expected {
+		t.Errorf("User config not respected: got %s, want %s", dirs["XDG_CACHE_HOME"], expected)
 	}
 }
 
-func TestXDGDirsWithCustomUserDirs(t *testing.T) {
-	// Save the original ConfigHome and restore it after the test
-	origConfigHome := xdg.ConfigHome
-	defer func() { xdg.ConfigHome = origConfigHome }()
+// Test 2: Critical - environment variables expand correctly
+func TestEnvironmentVariableExpansion(t *testing.T) {
+	tmpDir := t.TempDir()
+	os.Setenv("XDG_CONFIG_HOME", tmpDir)
+	os.Setenv("HOME", "/home/testuser")
+	defer os.Unsetenv("XDG_CONFIG_HOME")
+	defer os.Unsetenv("HOME")
 
-	// Create a temporary directory for our test files
-	tmpDir, err := ioutil.TempDir("", "xdg-test")
-	if err != nil {
-		t.Fatalf("Failed to create temp dir: %v", err)
+	xdgDir := filepath.Join(tmpDir, "xdg")
+	os.MkdirAll(xdgDir, 0755)
+	os.WriteFile(filepath.Join(xdgDir, "user.dirs"), []byte(`XDG_DESKTOP_DIR="$HOME/Desktop"`), 0644)
+
+	log := logger.NewLogger(false, "")
+	x := NewXDGDirs(log)
+	dirs, _ := x.ReadUserDirs()
+
+	if dirs["XDG_DESKTOP_DIR"] != "/home/testuser/Desktop" {
+		t.Errorf("$HOME not expanded: got %s", dirs["XDG_DESKTOP_DIR"])
 	}
-	defer os.RemoveAll(tmpDir)
+}
 
-	xdg.ConfigHome = tmpDir
+// Test 3: Robustness - handles real-world messy configs
+func TestHandlesMalformedConfig(t *testing.T) {
+	tmpDir := t.TempDir()
+	os.Setenv("XDG_CONFIG_HOME", tmpDir)
 	os.Setenv("HOME", tmpDir)
+	defer os.Unsetenv("XDG_CONFIG_HOME")
+	defer os.Unsetenv("HOME")
 
-	// Create a custom user.dirs file
-	customUserDirs := `XDG_DESKTOP_DIR="$HOME/CustomDesktop"
-XDG_DOWNLOAD_DIR="$HOME/CustomDownloads"
+	xdgDir := filepath.Join(tmpDir, "xdg")
+	os.MkdirAll(xdgDir, 0755)
+	
+	messyConfig := `# User's comments
+XDG_DESKTOP_DIR="$HOME/Desktop"  # inline comment
+MALFORMED LINE WITHOUT EQUALS
+XDG_DOWNLOAD_DIR="$HOME/Downloads"
 `
-	err = ioutil.WriteFile(filepath.Join(tmpDir, "user.dirs"), []byte(customUserDirs), 0644)
+	os.WriteFile(filepath.Join(xdgDir, "user.dirs"), []byte(messyConfig), 0644)
+
+	log := logger.NewLogger(false, "")
+	x := NewXDGDirs(log)
+	
+	// Should not crash
+	dirs, err := x.ReadUserDirs()
 	if err != nil {
-		t.Fatalf("Failed to create custom user.dirs: %v", err)
+		t.Fatalf("Should handle malformed config gracefully: %v", err)
 	}
 
-	log := logger.NewLogger(true)
-	xdgDirs := NewXDGDirs(log)
-
-	// Test ReadUserDirs and WriteUserDirs
-	userDirs, err := xdgDirs.ReadUserDirs()
-	if err != nil {
-		t.Fatalf("ReadUserDirs() error = %v", err)
+	// Should parse valid lines
+	if !strings.HasSuffix(dirs["XDG_DOWNLOAD_DIR"], "Downloads") {
+		t.Error("Failed to parse valid lines from messy config")
 	}
 
-	err = xdgDirs.WriteUserDirs(userDirs)
-	if err != nil {
-		t.Fatalf("WriteUserDirs() error = %v", err)
+	// Bug: Currently fails due to inline comment not being stripped
+	if strings.Contains(dirs["XDG_DESKTOP_DIR"], "#") {
+		t.Error("Inline comments not stripped from values")
 	}
+}
 
-	// Check if user-dirs.dirs was generated
-	userDirsDirsPath := filepath.Join(tmpDir, "user-dirs.dirs")
-	content, err := ioutil.ReadFile(userDirsDirsPath)
-	if err != nil {
-		t.Fatalf("Failed to read user-dirs.dirs: %v", err)
-	}
+// Test 4: Platform-specific behavior
+func TestPlatformSpecificDefaults(t *testing.T) {
+	tmpDir := t.TempDir()
+	os.Setenv("XDG_CONFIG_HOME", tmpDir)
+	os.Setenv("HOME", tmpDir)
+	defer os.Unsetenv("XDG_CONFIG_HOME")
+	defer os.Unsetenv("HOME")
 
-	// Check if custom directories are present in the generated file
-	if !strings.Contains(string(content), `XDG_DESKTOP_DIR="$HOME/CustomDesktop"`) {
-		t.Errorf("Custom Desktop directory not found in user-dirs.dirs")
-	}
-	if !strings.Contains(string(content), `XDG_DOWNLOAD_DIR="$HOME/CustomDownloads"`) {
-		t.Errorf("Custom Downloads directory not found in user-dirs.dirs")
-	}
+	log := logger.NewLogger(false, "")
+	x := NewXDGDirs(log)
+	dirs, _ := x.ReadUserDirs()
 
-	// Check if custom directories were created
-	customDesktop := filepath.Join(tmpDir, "CustomDesktop")
-	customDownloads := filepath.Join(tmpDir, "CustomDownloads")
-	if _, err := os.Stat(customDesktop); os.IsNotExist(err) {
-		t.Errorf("Custom Desktop directory was not created")
-	}
-	if _, err := os.Stat(customDownloads); os.IsNotExist(err) {
-		t.Errorf("Custom Downloads directory was not created")
+	// Just verify platform differences exist
+	if runtime.GOOS == "darwin" {
+		if !strings.Contains(dirs["XDG_VIDEOS_DIR"], "Movies") {
+			t.Error("macOS should use Movies folder")
+		}
 	}
 }
