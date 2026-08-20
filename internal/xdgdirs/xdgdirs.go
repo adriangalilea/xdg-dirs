@@ -8,7 +8,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/adrg/xdg"
+	"runtime"
+
 	"github.com/adriangalilea/xdg-dirs/internal/logger"
 )
 
@@ -28,21 +29,37 @@ func NewXDGDirs(log *logger.Logger) *XDGDirs {
 	}
 }
 
+// The defaults ARE the XDG spec literals, deliberately NOT platform-adapted.
+// This tool exists to give every platform the classic paths (lowercase, no
+// spaces, predictable - see README); the adrg/xdg library's macOS opinion
+// ("Application Support" for everything) was exactly what it replaces, and
+// shipping that opinion as the fallback made a fresh machine diverge from
+// the fleet the moment no user.dirs existed. Native mappings are an OPT-IN
+// via user.dirs, never a default. XDG_RUNTIME_DIR is deliberately absent:
+// the spec says the SYSTEM provides it (lifetime + permission semantics no
+// user tool can fake); set it in user.dirs if you must.
 func getDefaultXDGDirs() map[string]string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		panic(fmt.Sprintf("failed to get user home directory: %v", err))
+	}
+	videos := filepath.Join(home, "Videos")
+	if runtime.GOOS == "darwin" {
+		videos = filepath.Join(home, "Movies")
+	}
 	return map[string]string{
-		"XDG_CACHE_HOME":      xdg.CacheHome,
-		"XDG_CONFIG_HOME":     xdg.ConfigHome,
-		"XDG_DATA_HOME":       xdg.DataHome,
-		"XDG_STATE_HOME":      xdg.StateHome,
-		"XDG_RUNTIME_DIR":     xdg.RuntimeDir,
-		"XDG_DESKTOP_DIR":     xdg.UserDirs.Desktop,
-		"XDG_DOWNLOAD_DIR":    xdg.UserDirs.Download,
-		"XDG_DOCUMENTS_DIR":   xdg.UserDirs.Documents,
-		"XDG_MUSIC_DIR":       xdg.UserDirs.Music,
-		"XDG_PICTURES_DIR":    xdg.UserDirs.Pictures,
-		"XDG_VIDEOS_DIR":      xdg.UserDirs.Videos,
-		"XDG_TEMPLATES_DIR":   xdg.UserDirs.Templates,
-		"XDG_PUBLICSHARE_DIR": xdg.UserDirs.PublicShare,
+		"XDG_CACHE_HOME":      filepath.Join(home, ".cache"),
+		"XDG_CONFIG_HOME":     filepath.Join(home, ".config"),
+		"XDG_DATA_HOME":       filepath.Join(home, ".local", "share"),
+		"XDG_STATE_HOME":      filepath.Join(home, ".local", "state"),
+		"XDG_DESKTOP_DIR":     filepath.Join(home, "Desktop"),
+		"XDG_DOWNLOAD_DIR":    filepath.Join(home, "Downloads"),
+		"XDG_DOCUMENTS_DIR":   filepath.Join(home, "Documents"),
+		"XDG_MUSIC_DIR":       filepath.Join(home, "Music"),
+		"XDG_PICTURES_DIR":    filepath.Join(home, "Pictures"),
+		"XDG_VIDEOS_DIR":      videos,
+		"XDG_TEMPLATES_DIR":   filepath.Join(home, "Templates"),
+		"XDG_PUBLICSHARE_DIR": filepath.Join(home, "Public"),
 	}
 }
 

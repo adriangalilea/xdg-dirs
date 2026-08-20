@@ -4,10 +4,7 @@ go 1.23.0
 
 toolchain go1.24.3
 
-require (
-	github.com/adrg/xdg v0.5.3
-	github.com/charmbracelet/lipgloss v0.12.1
-)
+require github.com/charmbracelet/lipgloss v0.12.1
 
 require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect

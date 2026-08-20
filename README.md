@@ -122,38 +122,34 @@ XDG_CACHE_HOME="$HOME/.local/cache"
 
 For instance, I prefer to have the cache folder in `~/.local/cache` rather than `~/.cache` simply because I prefer a clutter-free `~` home :)
 
-#### Recommended macOS Configuration
+#### Native macOS paths (opt-in)
 
-If you're on macOS and want to use standard XDG paths instead of macOS defaults:
+If you WANT the native macOS mapping, opt in via `user.dirs`:
 
 ```bash
 # ~/.config/xdg/user.dirs
-# Custom XDG directories - prefer standard XDG paths over macOS defaults
-XDG_CONFIG_HOME="$HOME/.config"
-XDG_CACHE_HOME="$HOME/.local/cache"
-XDG_DATA_HOME="$HOME/.local/share"
-XDG_STATE_HOME="$HOME/.local/state"
-# Use macOS temp directory for runtime - auto-cleaned on reboot
-XDG_RUNTIME_DIR="$TMPDIR"
+XDG_CONFIG_HOME="$HOME/Library/Application Support"
+XDG_CACHE_HOME="$HOME/Library/Caches"
 ```
-
-This configuration:
-- Uses standard XDG paths (`.config`, `.local/share`, etc.) instead of `~/Library/Application Support`
-- Respects the XDG spec requirement that `XDG_RUNTIME_DIR` must be cleaned on reboot by using `$TMPDIR`
-- Keeps your home directory organized with a clean `.local` structure
-
-You can omit any directories you don't want to customize, and the tool will use platform-specific defaults.
-
-For instance, in this case, `XDG_VIDEOS_DIR` will be `~/Videos` on Linux and `~/Movies` on macOS.
 
 ## Default Behavior
 
-- Uses platform-specific defaults for all directories
-- User configurations in `user.dirs` override defaults
-- Preserves exact configurations from `user.dirs`
-- Generates `~/.config/xdg/generated.dirs` based on `user.dirs` and defaults
-
-For more information on XDG Base Directory Specification, check [XDG](https://github.com/adrg/xdg).
+- **The defaults are the XDG spec literals on every platform**: `~/.config`,
+  `~/.local/share`, `~/.local/state`, `~/.cache` - the classic, lowercase,
+  no-spaces paths this tool exists for. They are never platform-adapted;
+  native mappings (macOS `~/Library/...`) are strictly opt-in via
+  `user.dirs`. (Until 0.3.0 the defaults came from a library whose macOS
+  opinion was Application Support for everything - on a fresh machine with
+  no `user.dirs` the tool contradicted its own purpose. Never again: the
+  defaults are frozen literals in this repo, dependency-free.)
+- Only the user directories differ per platform: `XDG_VIDEOS_DIR` is
+  `~/Videos` on Linux and `~/Movies` on macOS.
+- `XDG_RUNTIME_DIR` is never emitted by default: the spec says the SYSTEM
+  provides it, with lifetime and permission semantics no user tool can
+  fake. Set it in `user.dirs` if you must (`$TMPDIR` on macOS is sane).
+- User configurations in `user.dirs` override defaults, preserved exactly.
+- Generates `~/.config/xdg/generated.dirs` from `user.dirs` + defaults,
+  sorted, byte-stable.
 
 ## FAQ
 
