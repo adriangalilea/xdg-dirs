@@ -12,10 +12,10 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"time"
 	"sync"
+	"time"
 
-	"xdg-dirs/internal/conf"
+	"github.com/adriangalilea/xdg-dirs/internal/conf"
 	"github.com/charmbracelet/lipgloss"
 )
 

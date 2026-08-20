@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-
-	"github.com/adrg/xdg"
+	"sort"
 	"strings"
 	"sync"
-	"xdg-dirs/internal/logger"
+
+	"github.com/adrg/xdg"
+	"github.com/adriangalilea/xdg-dirs/internal/logger"
 )
 
 type XDGDirs struct {
@@ -29,18 +30,18 @@ func NewXDGDirs(log *logger.Logger) *XDGDirs {
 
 func getDefaultXDGDirs() map[string]string {
 	return map[string]string{
-		"XDG_CACHE_HOME":     xdg.CacheHome,
-		"XDG_CONFIG_HOME":    xdg.ConfigHome,
-		"XDG_DATA_HOME":      xdg.DataHome,
-		"XDG_STATE_HOME":     xdg.StateHome,
-		"XDG_RUNTIME_DIR":    xdg.RuntimeDir,
-		"XDG_DESKTOP_DIR":    xdg.UserDirs.Desktop,
-		"XDG_DOWNLOAD_DIR":   xdg.UserDirs.Download,
-		"XDG_DOCUMENTS_DIR":  xdg.UserDirs.Documents,
-		"XDG_MUSIC_DIR":      xdg.UserDirs.Music,
-		"XDG_PICTURES_DIR":   xdg.UserDirs.Pictures,
-		"XDG_VIDEOS_DIR":     xdg.UserDirs.Videos,
-		"XDG_TEMPLATES_DIR":  xdg.UserDirs.Templates,
+		"XDG_CACHE_HOME":      xdg.CacheHome,
+		"XDG_CONFIG_HOME":     xdg.ConfigHome,
+		"XDG_DATA_HOME":       xdg.DataHome,
+		"XDG_STATE_HOME":      xdg.StateHome,
+		"XDG_RUNTIME_DIR":     xdg.RuntimeDir,
+		"XDG_DESKTOP_DIR":     xdg.UserDirs.Desktop,
+		"XDG_DOWNLOAD_DIR":    xdg.UserDirs.Download,
+		"XDG_DOCUMENTS_DIR":   xdg.UserDirs.Documents,
+		"XDG_MUSIC_DIR":       xdg.UserDirs.Music,
+		"XDG_PICTURES_DIR":    xdg.UserDirs.Pictures,
+		"XDG_VIDEOS_DIR":      xdg.UserDirs.Videos,
+		"XDG_TEMPLATES_DIR":   xdg.UserDirs.Templates,
 		"XDG_PUBLICSHARE_DIR": xdg.UserDirs.PublicShare,
 	}
 }
@@ -132,14 +133,19 @@ func (x *XDGDirs) WriteUserDirs(userDirs map[string]string) error {
 	}
 	defer file.Close()
 
-	_, err = file.WriteString("# This file is written by xdg-user-dirs-update\n# If you want to change or add directories, just edit the line you're\n# interested in. All local changes will be retained on the next run.\n# Format is XDG_xxx_DIR=\"$HOME/yyy\", where yyy is a shell-escaped\n# homedir-relative path, or XDG_xxx_DIR=\"/yyy\", where /yyy is an\n# absolute path. No other format is supported.\n#\n")
+	_, err = file.WriteString("# This file is written by xdg-dirs. Do not edit: it is regenerated on\n# every run. To override a directory, edit user.dirs in the same folder.\n# Entries are sorted by name so identical state diffs byte-identically.\n#\n")
 	if err != nil {
 		x.logger.Error("Failed to write to generated.dirs file: %v", err)
 		return fmt.Errorf("failed to write to generated.dirs file: %w", err)
 	}
 
-	for key, value := range userDirs {
-		_, err = file.WriteString(fmt.Sprintf("%s=\"%s\"\n", key, value))
+	keys := make([]string, 0, len(userDirs))
+	for key := range userDirs {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		_, err = file.WriteString(fmt.Sprintf("%s=\"%s\"\n", key, userDirs[key]))
 		if err != nil {
 			x.logger.Error("Failed to write to generated.dirs file: %v", err)
 			return fmt.Errorf("failed to write to generated.dirs file: %w", err)

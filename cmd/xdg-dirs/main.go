@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	
-	"xdg-dirs/internal/conf"
-	"xdg-dirs/internal/logger"
-	"xdg-dirs/internal/setup"
-	"xdg-dirs/internal/updater"
+
+	"github.com/adriangalilea/xdg-dirs/internal/conf"
+	"github.com/adriangalilea/xdg-dirs/internal/logger"
+	"github.com/adriangalilea/xdg-dirs/internal/setup"
+	"github.com/adriangalilea/xdg-dirs/internal/updater"
 )
 
 var log *logger.Logger

@@ -19,8 +19,15 @@ It works very similarly, but instead of using `~/.config/user-dirs.dirs` which i
 - Non-destructive directory updates, when a new XDG folder is set, the previous folder is not modified in any way
 - Customizable user directory locations on `~/.config/xdg/user.dirs`
 - Automatic generation of `~/.config/xdg/generated.dirs`, which will be a merge of `~/.config/xdg/user.dirs` and default XDG standards as per [this XDG go library](https://github.com/adrg/xdg)
+- Deterministic output: export lines and `generated.dirs` entries are sorted by variable name, so identical state produces byte-identical output. Two runs diff clean, and anything auditing your environment (dotfiles drift checks, config snapshots) gets exact diffs instead of shuffled noise
 
 ## Installation
+
+With Go installed:
+
+```
+go install github.com/adriangalilea/xdg-dirs/cmd/xdg-dirs@latest
+```
 
 <details>
 <summary>Compiling from source</summary>
@@ -49,23 +56,23 @@ To compile `xdg-dirs` from source:
 
 ## Usage
 
-The tool is designed to be evaluated by the shell. This means that the only output is the exported variables:
+The tool is designed to be evaluated by the shell. This means that the only output is the exported variables, always sorted by name:
 
 ```
 $ xdg-dirs
+export XDG_CACHE_HOME="/home/adrian/.cache"
 export XDG_CONFIG_HOME="/home/adrian/.config"
 export XDG_DATA_HOME="/home/adrian/.local/share"
-export XDG_RUNTIME_DIR="/run/user/1000"
-export XDG_DOCUMENTS_DIR="/home/adrian/Documents"
-export XDG_MUSIC_DIR="/home/adrian/Music"
-export XDG_VIDEOS_DIR="/home/adrian/Videos"
-export XDG_TEMPLATES_DIR="/home/adrian/Templates"
-export XDG_CACHE_HOME="/home/adrian/.cache"
-export XDG_STATE_HOME="/home/adrian/.local/state"
 export XDG_DESKTOP_DIR="/home/adrian/Desktop"
+export XDG_DOCUMENTS_DIR="/home/adrian/Documents"
 export XDG_DOWNLOAD_DIR="/home/adrian/Downloads"
+export XDG_MUSIC_DIR="/home/adrian/Music"
 export XDG_PICTURES_DIR="/home/adrian/Pictures"
 export XDG_PUBLICSHARE_DIR="/home/adrian/Public"
+export XDG_RUNTIME_DIR="/run/user/1000"
+export XDG_STATE_HOME="/home/adrian/.local/state"
+export XDG_TEMPLATES_DIR="/home/adrian/Templates"
+export XDG_VIDEOS_DIR="/home/adrian/Videos"
 ```
 
 So it's meant to be used like this:

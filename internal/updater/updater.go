@@ -3,11 +3,12 @@ package updater
 import (
 	"fmt"
 	"os"
-	"strings"
 	"path/filepath"
+	"sort"
+	"strings"
 
-	"xdg-dirs/internal/logger"
-	"xdg-dirs/internal/xdgdirs"
+	"github.com/adriangalilea/xdg-dirs/internal/logger"
+	"github.com/adriangalilea/xdg-dirs/internal/xdgdirs"
 )
 
 type Updater struct {
@@ -85,24 +86,29 @@ func (u *Updater) GetUserDirs() (map[string]string, error) {
 	return u.xdgDirs.ReadUserDirs()
 }
 
+// ExportEnv emits one export line per XDG_* variable, sorted by name.
+// Sorted output is a contract: identical state must produce byte-identical
+// output, so callers can diff runs exactly.
 func (u *Updater) ExportEnv(userDirs map[string]string) string {
-	var exports []string
-	seen := make(map[string]bool)
-
-	// Include user directories and base directories without duplication
-	for key, value := range userDirs {
-		if strings.HasPrefix(key, "XDG_") {
-			exports = append(exports, fmt.Sprintf("export %s=\"%s\"", key, value))
-			seen[key] = true
-		}
-	}
-
+	merged := make(map[string]string, len(u.xdgDirs.Dirs)+len(userDirs))
 	for key, value := range u.xdgDirs.Dirs {
-		if strings.HasPrefix(key, "XDG_") && !seen[key] {
-			exports = append(exports, fmt.Sprintf("export %s=\"%s\"", key, value))
-			seen[key] = true
-		}
+		merged[key] = value
+	}
+	for key, value := range userDirs {
+		merged[key] = value
 	}
 
+	keys := make([]string, 0, len(merged))
+	for key := range merged {
+		if strings.HasPrefix(key, "XDG_") {
+			keys = append(keys, key)
+		}
+	}
+	sort.Strings(keys)
+
+	exports := make([]string, len(keys))
+	for i, key := range keys {
+		exports[i] = fmt.Sprintf("export %s=\"%s\"", key, merged[key])
+	}
 	return strings.Join(exports, "\n")
 }

@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"xdg-dirs/internal/logger"
+	"github.com/adriangalilea/xdg-dirs/internal/logger"
 )
 
 // Prepare performs initial setup tasks like unsetting environment variables
@@ -42,7 +42,7 @@ func backupUserDirsFile(log *logger.Logger) error {
 		return err
 	}
 	userDirsFile := filepath.Join(homeDir, ".config", "user-dirs.dirs")
-	
+
 	if _, err := os.Stat(userDirsFile); os.IsNotExist(err) {
 		log.Debug("user-dirs.dirs didn't exist.")
 		return nil

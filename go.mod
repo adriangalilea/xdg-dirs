@@ -1,4 +1,4 @@
-module xdg-dirs
+module github.com/adriangalilea/xdg-dirs
 
 go 1.23.0
 

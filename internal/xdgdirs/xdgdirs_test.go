@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"xdg-dirs/internal/logger"
+	"github.com/adriangalilea/xdg-dirs/internal/logger"
 )
 
 // Test 1: Core feature - user config actually overrides defaults
@@ -64,7 +64,7 @@ func TestHandlesMalformedConfig(t *testing.T) {
 
 	xdgDir := filepath.Join(tmpDir, "xdg")
 	os.MkdirAll(xdgDir, 0755)
-	
+
 	messyConfig := `# User's comments
 XDG_DESKTOP_DIR="$HOME/Desktop"  # inline comment
 MALFORMED LINE WITHOUT EQUALS
@@ -74,7 +74,7 @@ XDG_DOWNLOAD_DIR="$HOME/Downloads"
 
 	log := logger.NewLogger(false, "")
 	x := NewXDGDirs(log)
-	
+
 	// Should not crash
 	dirs, err := x.ReadUserDirs()
 	if err != nil {
